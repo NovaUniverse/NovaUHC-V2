@@ -157,24 +157,29 @@ public class UHCv2 extends Game implements Listener {
 		meetupTrigger.addTickCallback(new TickCallback() {
 			@Override
 			public void execute(long timeLeft) {
-				switch ((int) timeLeft) {
+				if (timeLeft % 20 != 0) {
+					return;
+				}
+				int timeLeftReal = (int) timeLeft / 20;
+
+				switch (timeLeftReal) {
 				case 60:
-					Bukkit.getServer().broadcastMessage(ChatColor.GOLD + "" + ChatColor.BOLD + "Meetup starts in" + ChatColor.AQUA + " 1 minute");
+					Bukkit.getServer().broadcastMessage(ChatColor.GOLD + "" + ChatColor.BOLD + "Meetup starts in" + ChatColor.AQUA + "" + ChatColor.BOLD + " 1 minute");
 					for (Player player : Bukkit.getServer().getOnlinePlayers()) {
 						VersionIndependantUtils.get().playSound(player, player.getLocation(), VersionIndependantSound.NOTE_PLING);
 					}
 					break;
 
 				case 600:
-					Bukkit.getServer().broadcastMessage(ChatColor.GOLD + "" + ChatColor.BOLD + "Meetup starts in " + ChatColor.AQUA + "10 minutes");
+					Bukkit.getServer().broadcastMessage(ChatColor.GOLD + "" + ChatColor.BOLD + "Meetup starts in " + ChatColor.AQUA + "" + ChatColor.BOLD + "10 minutes");
 					for (Player player : Bukkit.getServer().getOnlinePlayers()) {
 						VersionIndependantUtils.get().playSound(player, player.getLocation(), VersionIndependantSound.NOTE_PLING);
 					}
 					break;
 
 				default:
-					if (timeLeft < 6 && timeLeft > 0) {
-						Bukkit.getServer().broadcastMessage(ChatColor.GOLD + "" + ChatColor.BOLD + "Meetup starts in " + ChatColor.AQUA + "" + timeLeft);
+					if (timeLeftReal < 6 && timeLeftReal > 0) {
+						Bukkit.getServer().broadcastMessage(ChatColor.GOLD + "" + ChatColor.BOLD + "Meetup starts in " + ChatColor.AQUA + "" + ChatColor.BOLD + "" + timeLeftReal);
 						for (Player player : Bukkit.getServer().getOnlinePlayers()) {
 							VersionIndependantUtils.get().playSound(player, player.getLocation(), VersionIndependantSound.NOTE_PLING);
 						}
@@ -187,24 +192,29 @@ public class UHCv2 extends Game implements Listener {
 		endGracePeriodTrigger.addTickCallback(new TickCallback() {
 			@Override
 			public void execute(long timeLeft) {
-				switch ((int) timeLeft) {
+				if (timeLeft % 20 != 0) {
+					return;
+				}
+				int timeLeftReal = (int) timeLeft / 20;
+
+				switch ((int) timeLeftReal) {
 				case 60:
-					Bukkit.getServer().broadcastMessage(ChatColor.GOLD + "" + ChatColor.BOLD + "Grace period ends in" + ChatColor.AQUA + " 1 minute");
+					Bukkit.getServer().broadcastMessage(ChatColor.GOLD + "" + ChatColor.BOLD + "Grace period ends in" + ChatColor.AQUA + "" + ChatColor.BOLD + " 1 minute");
 					for (Player player : Bukkit.getServer().getOnlinePlayers()) {
 						VersionIndependantUtils.get().playSound(player, player.getLocation(), VersionIndependantSound.NOTE_PLING);
 					}
 					break;
 
 				case 600:
-					Bukkit.getServer().broadcastMessage(ChatColor.GOLD + "" + ChatColor.BOLD + "Grace period ends in " + ChatColor.AQUA + "10 minutes");
+					Bukkit.getServer().broadcastMessage(ChatColor.GOLD + "" + ChatColor.BOLD + "Grace period ends in " + ChatColor.AQUA + "" + ChatColor.BOLD + "10 minutes");
 					for (Player player : Bukkit.getServer().getOnlinePlayers()) {
 						VersionIndependantUtils.get().playSound(player, player.getLocation(), VersionIndependantSound.NOTE_PLING);
 					}
 					break;
 
 				default:
-					if (timeLeft < 6 && timeLeft > 0) {
-						Bukkit.getServer().broadcastMessage(ChatColor.GOLD + "" + ChatColor.BOLD + "Grace period ends in " + ChatColor.AQUA + "" + timeLeft);
+					if (timeLeftReal < 6 && timeLeftReal > 0) {
+						Bukkit.getServer().broadcastMessage(ChatColor.GOLD + "" + ChatColor.BOLD + "Grace period ends in " + ChatColor.AQUA + "" + ChatColor.BOLD + "" + timeLeftReal);
 						for (Player player : Bukkit.getServer().getOnlinePlayers()) {
 							VersionIndependantUtils.get().playSound(player, player.getLocation(), VersionIndependantSound.NOTE_PLING);
 						}
