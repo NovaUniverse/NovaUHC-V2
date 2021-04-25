@@ -135,6 +135,14 @@ public class UHCv2 extends Game implements Listener {
 		this.endGracePeriodTrigger = new DelayedGameTrigger("novauniverse.uhc.endgraceperiod", 1337L /* placeholder */, new TriggerCallback() {
 			@Override
 			public void run(GameTrigger trigger, TriggerFlag reason) {
+				((ScheduledGameTrigger) trigger).stop();
+
+				Bukkit.broadcastMessage(ChatColor.GOLD + "" + ChatColor.BOLD + "PVP is now enabled");
+
+				for (Player player : Bukkit.getServer().getOnlinePlayers()) {
+					VersionIndependantUtils.get().playSound(player, player.getLocation(), VersionIndependantSound.NOTE_PLING);
+				}
+
 				gracePeriodActive = false;
 			}
 		});
@@ -143,6 +151,12 @@ public class UHCv2 extends Game implements Listener {
 			@Override
 			public void run(GameTrigger trigger, TriggerFlag reason) {
 				((ScheduledGameTrigger) trigger).stop();
+				
+				Bukkit.broadcastMessage(ChatColor.GOLD + "" + ChatColor.BOLD + "Teleporting to meetup area");
+				
+				for (Player player : Bukkit.getServer().getOnlinePlayers()) {
+					VersionIndependantUtils.get().playSound(player, player.getLocation(), VersionIndependantSound.NOTE_PLING);
+				}
 
 				triggerMeetup();
 			}
@@ -336,7 +350,6 @@ public class UHCv2 extends Game implements Listener {
 				safeTeleport(player, location);
 
 				new BukkitRunnable() {
-
 					@Override
 					public void run() {
 						safeTeleport(player, location);
@@ -422,7 +435,7 @@ public class UHCv2 extends Game implements Listener {
 			endGracePeriodTrigger.stop();
 		}
 
-		Bukkit.getServer().broadcastMessage(ChatColor.GOLD + "" + ChatColor.BOLD + "Grace period will end in " + ChatColor.AQUA + TextUtils.formatTimeToText(time));
+		Bukkit.getServer().broadcastMessage(ChatColor.GOLD + "" + ChatColor.BOLD + "Grace period will end in " + ChatColor.AQUA + "" + ChatColor.BOLD + TextUtils.formatTimeToText(time));
 
 		gracePeriodActive = true;
 
