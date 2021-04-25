@@ -314,6 +314,7 @@ public class UHCv2 extends Game implements Listener {
 
 			player.setGameMode(isPlaying ? GameMode.SURVIVAL : GameMode.SPECTATOR);
 			player.setFireTicks(0);
+			player.setSaturation(20F);
 
 			if (isPlaying) {
 				if (spawnLocationList.size() == 0) {
