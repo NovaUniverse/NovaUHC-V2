@@ -1,0 +1,13 @@
+allow_reconnect: true
+
+combat_tagging: true
+
+player_elimination_delay: 180
+
+main_world_size: 64
+
+spawn_locations_to_find: 300
+
+meetup_time: 3600
+
+grace_period_time: 900

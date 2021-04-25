@@ -1,0 +1,6 @@
+name: NovaUHCv2
+main: net.novauniverse.games.uhcv2.NovaUHCv2
+description: Novauniverse UHC v2
+version: 1.0
+depend: [NovaCore, NovaCoreGameEngine]
+softdepend: [NovaGamesTarget]
