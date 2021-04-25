@@ -132,14 +132,14 @@ public class UHCv2 extends Game implements Listener {
 			}
 		});
 
-		this.endGracePeriodTrigger = new DelayedGameTrigger("novauniverse.uhc.endgraceperiod", 1337L, new TriggerCallback() {
+		this.endGracePeriodTrigger = new DelayedGameTrigger("novauniverse.uhc.endgraceperiod", 1337L /* placeholder */, new TriggerCallback() {
 			@Override
 			public void run(GameTrigger trigger, TriggerFlag reason) {
 				gracePeriodActive = false;
 			}
 		});
 
-		this.meetupTrigger = new DelayedGameTrigger("novauniverse.uhc.meetup", meetupTime, new TriggerCallback() {
+		this.meetupTrigger = new DelayedGameTrigger("novauniverse.uhc.meetup", meetupTime * 20 /* in ticks */, new TriggerCallback() {
 			@Override
 			public void run(GameTrigger trigger, TriggerFlag reason) {
 				((ScheduledGameTrigger) trigger).stop();
@@ -183,7 +183,7 @@ public class UHCv2 extends Game implements Listener {
 				}
 			}
 		});
-		
+
 		endGracePeriodTrigger.addTickCallback(new TickCallback() {
 			@Override
 			public void execute(long timeLeft) {
@@ -385,12 +385,12 @@ public class UHCv2 extends Game implements Listener {
 		startNoTpDamageTime();
 
 		ModuleManager.enable(CompassTracker.class);
-		
+
 		CompassTracker.getInstance().setStrictMode(true);
-		
+
 		for (Player player : Bukkit.getServer().getOnlinePlayers()) {
 			player.getInventory().addItem(new ItemBuilder(Material.COMPASS).setName(ChatColor.GOLD + "" + ChatColor.BOLD + "Player tracker").addLore(ChatColor.AQUA + "Points towards the closest player").build());
-			
+
 			Location location = LocationUtils.centerLocation(mainWorld.getHighestBlockAt(new Location(mainWorld, RandomGenerator.generateDouble(-31, 31), 0, RandomGenerator.generateDouble(-31, 31))).getLocation().clone().add(0, 3, 0));
 
 			safeTeleport(player, location);
@@ -401,7 +401,6 @@ public class UHCv2 extends Game implements Listener {
 				}
 			}.runTaskLater(NovaUHCv2.getInstance(), 5L);
 		}
-		
 
 		mainWorld.getWorldBorder().setCenter(0.5, 0.5);
 		mainWorld.getWorldBorder().setSize(66);
@@ -416,7 +415,7 @@ public class UHCv2 extends Game implements Listener {
 
 		gracePeriodActive = true;
 
-		endGracePeriodTrigger.setDelay(time);
+		endGracePeriodTrigger.setDelay(time * 20); // in ticks
 
 		endGracePeriodTrigger.start();
 	}
