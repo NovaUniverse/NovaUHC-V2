@@ -27,6 +27,7 @@ import org.bukkit.event.player.PlayerPortalEvent;
 import org.bukkit.scheduler.BukkitRunnable;
 
 import net.novauniverse.games.uhcv2.NovaUHCv2;
+import net.novauniverse.games.uhcv2.tracker.UHCCompassTracker;
 import net.zeeraa.novacore.commons.log.Log;
 import net.zeeraa.novacore.commons.tasks.Task;
 import net.zeeraa.novacore.commons.timers.TickCallback;
@@ -522,6 +523,7 @@ public class UHCv2 extends Game implements Listener {
 		ModuleManager.enable(CompassTracker.class);
 
 		CompassTracker.getInstance().setStrictMode(true);
+		CompassTracker.getInstance().setCompassTrackerTarget(new UHCCompassTracker());
 
 		for (Player player : Bukkit.getServer().getOnlinePlayers()) {
 			player.getInventory().addItem(new ItemBuilder(Material.COMPASS).setName(ChatColor.GOLD + "" + ChatColor.BOLD + "Player tracker").addLore(ChatColor.AQUA + "Points towards the closest player").build());
