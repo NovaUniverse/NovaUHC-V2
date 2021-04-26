@@ -57,6 +57,8 @@ public class NovaUHCv2 extends JavaPlugin implements Listener {
 
 		long meetupTime = getConfig().getLong("meetup_time");
 		
+		long finalHealTime = getConfig().getLong("final_heal_time");
+		
 		long gracePeriodTime =  getConfig().getLong("grace_period_time");
 		
 		GameManager.getInstance().setUseCombatTagging(combatTagging);
@@ -67,7 +69,7 @@ public class NovaUHCv2 extends JavaPlugin implements Listener {
 		World mainWorld = Bukkit.getServer().getWorld("world");
 		World netherWorld = Bukkit.getServer().getWorld("world_nether");
 		
-		this.game = new UHCv2(mainWorld, netherWorld, mainWorldSize, spawnLocationsToFind, meetupTime, gracePeriodTime);
+		this.game = new UHCv2(mainWorld, netherWorld, mainWorldSize, spawnLocationsToFind, meetupTime, gracePeriodTime, finalHealTime);
 		
 		GameManager.getInstance().loadGame(game);
 		

@@ -18,14 +18,17 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.entity.EntityDamageEvent;
+import org.bukkit.event.entity.EntityPortalEvent;
 import org.bukkit.event.entity.EntityRegainHealthEvent;
 import org.bukkit.event.entity.EntityRegainHealthEvent.RegainReason;
 import org.bukkit.inventory.meta.FireworkMeta;
 import org.bukkit.event.entity.PlayerDeathEvent;
+import org.bukkit.event.player.PlayerPortalEvent;
 import org.bukkit.scheduler.BukkitRunnable;
 
 import net.novauniverse.games.uhcv2.NovaUHCv2;
 import net.zeeraa.novacore.commons.log.Log;
+import net.zeeraa.novacore.commons.tasks.Task;
 import net.zeeraa.novacore.commons.timers.TickCallback;
 import net.zeeraa.novacore.commons.utils.Callback;
 import net.zeeraa.novacore.commons.utils.ListUtils;
@@ -43,6 +46,7 @@ import net.zeeraa.novacore.spigot.module.modules.game.triggers.GameTrigger;
 import net.zeeraa.novacore.spigot.module.modules.game.triggers.ScheduledGameTrigger;
 import net.zeeraa.novacore.spigot.module.modules.game.triggers.TriggerCallback;
 import net.zeeraa.novacore.spigot.module.modules.game.triggers.TriggerFlag;
+import net.zeeraa.novacore.spigot.tasks.SimpleTask;
 import net.zeeraa.novacore.spigot.utils.ItemBuilder;
 import net.zeeraa.novacore.spigot.utils.LocationUtils;
 import net.zeeraa.novacore.spigot.utils.PlayerUtils;
@@ -66,8 +70,11 @@ public class UHCv2 extends Game implements Listener {
 	private boolean gracePeriodActive;
 	private DelayedGameTrigger endGracePeriodTrigger;
 	private DelayedGameTrigger meetupTrigger;
+	private DelayedGameTrigger finalHealTrigger;
 
 	private long meetupTime;
+
+	private long finalHealTime;
 
 	private List<Location> spawnLocations;
 
@@ -76,6 +83,10 @@ public class UHCv2 extends Game implements Listener {
 	private boolean preventAllDamage;
 
 	private long gracePeriodTime;
+
+	private boolean meetupStarted;
+
+	private Task borderEscapePreventionTask;
 
 	public List<Location> getSpawnLocations() {
 		return spawnLocations;
@@ -89,7 +100,9 @@ public class UHCv2 extends Game implements Listener {
 		return gracePeriodTime;
 	}
 
-	public UHCv2(World mainWorld, World netherWorld, int mainWorldSize, int spawnLocationsToFind, long meetupTime, long gracePeriodTime) {
+	public UHCv2(World mainWorld, World netherWorld, int mainWorldSize, int spawnLocationsToFind, long meetupTime, long gracePeriodTime, long finalHealTime) {
+		this.world = mainWorld;
+		
 		this.mainWorld = mainWorld;
 		this.netherWorld = netherWorld;
 		this.ended = false;
@@ -112,11 +125,17 @@ public class UHCv2 extends Game implements Listener {
 		this.meetupTime = meetupTime;
 
 		this.gracePeriodTime = gracePeriodTime;
+
+		this.meetupStarted = false;
+
+		this.finalHealTime = finalHealTime;
+
+		this.borderEscapePreventionTask = null;
 	}
 
 	@Override
 	public void onLoad() {
-		this.mainWorldGenerator = new WorldPreGenerator(mainWorld, mainWorldSize, 60, 1, new Callback() {
+		this.mainWorldGenerator = new WorldPreGenerator(mainWorld, mainWorldSize + 10, 60, 1, new Callback() {
 			@Override
 			public void execute() {
 				Log.info("UHC", "Main world generation complete");
@@ -125,7 +144,7 @@ public class UHCv2 extends Game implements Listener {
 			}
 		});
 
-		this.netherWorldGenerator = new WorldPreGenerator(netherWorld, mainWorldSize, 60, 1, new Callback() {
+		this.netherWorldGenerator = new WorldPreGenerator(netherWorld, mainWorldSize + 10, 60, 1, new Callback() {
 			@Override
 			public void execute() {
 				Log.info("UHC", "Nether world generation complete");
@@ -151,9 +170,9 @@ public class UHCv2 extends Game implements Listener {
 			@Override
 			public void run(GameTrigger trigger, TriggerFlag reason) {
 				((ScheduledGameTrigger) trigger).stop();
-				
+
 				Bukkit.broadcastMessage(ChatColor.GOLD + "" + ChatColor.BOLD + "Teleporting to meetup area");
-				
+
 				for (Player player : Bukkit.getServer().getOnlinePlayers()) {
 					VersionIndependantUtils.get().playSound(player, player.getLocation(), VersionIndependantSound.NOTE_PLING);
 				}
@@ -171,7 +190,7 @@ public class UHCv2 extends Game implements Listener {
 		meetupTrigger.addTickCallback(new TickCallback() {
 			@Override
 			public void execute(long timeLeft) {
-				if (timeLeft % 20 != 0) {
+				if (timeLeft % 20 != 19) {
 					return;
 				}
 				int timeLeftReal = (int) timeLeft / 20;
@@ -206,7 +225,7 @@ public class UHCv2 extends Game implements Listener {
 		endGracePeriodTrigger.addTickCallback(new TickCallback() {
 			@Override
 			public void execute(long timeLeft) {
-				if (timeLeft % 20 != 0) {
+				if (timeLeft % 20 != 19) {
 					return;
 				}
 				int timeLeftReal = (int) timeLeft / 20;
@@ -240,6 +259,60 @@ public class UHCv2 extends Game implements Listener {
 
 		this.addTrigger(endGracePeriodTrigger);
 		this.addTrigger(meetupTrigger);
+
+		if (finalHealTime > 0) {
+			finalHealTrigger = new DelayedGameTrigger("novauniverse.uhc.finalheal", finalHealTime * 20 /* in ticks */, new TriggerCallback() {
+				@Override
+				public void run(GameTrigger trigger, TriggerFlag reason) {
+					((DelayedGameTrigger) trigger).stop();
+
+					for (Player player : Bukkit.getServer().getOnlinePlayers()) {
+						if (player.getGameMode() != GameMode.SPECTATOR) {
+							player.sendMessage(ChatColor.GOLD + "" + ChatColor.BOLD + "You have been healed");
+
+							VersionIndependantUtils.get().playSound(player, player.getLocation(), VersionIndependantSound.NOTE_PLING, 1F, 1.5F);
+
+							PlayerUtils.fullyHealPlayer(player);
+						}
+					}
+				}
+			});
+
+			finalHealTrigger.addTickCallback(new TickCallback() {
+				@Override
+				public void execute(long timeLeft) {
+					if (timeLeft % 20 != 19) {
+						return;
+					}
+					int timeLeftReal = (int) timeLeft / 20;
+
+					switch ((int) timeLeftReal) {
+					case 60:
+						Bukkit.getServer().broadcastMessage(ChatColor.GOLD + "" + ChatColor.BOLD + "Final heal in" + ChatColor.AQUA + "" + ChatColor.BOLD + " 1 minute");
+						for (Player player : Bukkit.getServer().getOnlinePlayers()) {
+							VersionIndependantUtils.get().playSound(player, player.getLocation(), VersionIndependantSound.NOTE_PLING);
+						}
+						break;
+
+					case 600:
+						Bukkit.getServer().broadcastMessage(ChatColor.GOLD + "" + ChatColor.BOLD + "Final heal in " + ChatColor.AQUA + "" + ChatColor.BOLD + "10 minutes");
+						for (Player player : Bukkit.getServer().getOnlinePlayers()) {
+							VersionIndependantUtils.get().playSound(player, player.getLocation(), VersionIndependantSound.NOTE_PLING);
+						}
+						break;
+
+					default:
+						break;
+					}
+				}
+			});
+
+			finalHealTrigger.addFlag(TriggerFlag.START_ON_GAME_START);
+			finalHealTrigger.addFlag(TriggerFlag.STOP_ON_GAME_END);
+			finalHealTrigger.addFlag(TriggerFlag.RUN_ONLY_ONCE);
+
+			this.addTrigger(finalHealTrigger);
+		}
 
 		mainWorldGenerator.start();
 		netherWorldGenerator.start();
@@ -358,6 +431,42 @@ public class UHCv2 extends Game implements Listener {
 			}
 		}
 
+		borderEscapePreventionTask = new SimpleTask(new Runnable() {
+			@Override
+			public void run() {
+				for (Player player : Bukkit.getServer().getOnlinePlayers()) {
+					if (player.getGameMode() == GameMode.SPECTATOR) {
+						if (player.getWorld().getUID().toString().equalsIgnoreCase(mainWorld.getUID().toString()) || player.getWorld().getUID().toString().equalsIgnoreCase(netherWorld.getUID().toString())) {
+							double borderSize = player.getWorld().getWorldBorder().getSize() / 2;
+
+							//Log.trace("Border size: " + borderSize);
+
+							double px = player.getLocation().getX();
+							double pz = player.getLocation().getZ();
+
+							if (px > borderSize || (px < 0 && (px * -1) > borderSize)) {
+								Location newLocation = player.getLocation().clone();
+
+								newLocation.setX(px < 0 ? borderSize * -1 : borderSize);
+
+								player.teleport(newLocation);
+							}
+
+							if (pz > borderSize || (pz < 0 && (pz * -1) > borderSize)) {
+								Location newLocation = player.getLocation().clone();
+
+								newLocation.setZ(pz < 0 ? borderSize * -1 : borderSize);
+
+								player.teleport(newLocation);
+							}
+						}
+					}
+				}
+			}
+		}, 5L);
+
+		borderEscapePreventionTask.start();
+
 		started = true;
 
 		this.sendBeginEvent();
@@ -389,6 +498,8 @@ public class UHCv2 extends Game implements Listener {
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
+
+		Task.tryStopTask(borderEscapePreventionTask);
 
 		ended = true;
 	}
@@ -428,6 +539,8 @@ public class UHCv2 extends Game implements Listener {
 
 		mainWorld.getWorldBorder().setCenter(0.5, 0.5);
 		mainWorld.getWorldBorder().setSize(66);
+
+		meetupStarted = true;
 	}
 
 	public void startGracePeriod(long time) {
@@ -537,6 +650,20 @@ public class UHCv2 extends Game implements Listener {
 	public void onPlayerDeath(PlayerDeathEvent e) {
 		if (hasStarted()) {
 			e.getEntity().setGameMode(GameMode.SPECTATOR);
+		}
+	}
+
+	@EventHandler(priority = EventPriority.NORMAL, ignoreCancelled = true)
+	public void onPlayerPortal(PlayerPortalEvent e) {
+		if (meetupStarted) {
+			e.setCancelled(true);
+		}
+	}
+
+	@EventHandler(priority = EventPriority.NORMAL, ignoreCancelled = true)
+	public void onEntityPortal(EntityPortalEvent e) {
+		if (meetupStarted) {
+			e.setCancelled(true);
 		}
 	}
 

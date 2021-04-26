@@ -11,3 +11,5 @@ spawn_locations_to_find: 300
 meetup_time: 3600
 
 grace_period_time: 900
+
+final_heal_time: 720
