@@ -22,7 +22,11 @@ import org.bukkit.event.entity.EntityPortalEvent;
 import org.bukkit.event.entity.EntityRegainHealthEvent;
 import org.bukkit.event.entity.EntityRegainHealthEvent.RegainReason;
 import org.bukkit.inventory.meta.FireworkMeta;
+import org.bukkit.potion.PotionEffect;
+import org.bukkit.potion.PotionEffectType;
 import org.bukkit.event.entity.PlayerDeathEvent;
+import org.bukkit.event.player.PlayerJoinEvent;
+import org.bukkit.event.player.PlayerMoveEvent;
 import org.bukkit.event.player.PlayerPortalEvent;
 import org.bukkit.scheduler.BukkitRunnable;
 
@@ -78,6 +82,7 @@ public class UHCv2 extends Game implements Listener {
 	private long finalHealTime;
 
 	private List<Location> spawnLocations;
+	private List<Location> spawnLocationsToUse;
 
 	private boolean spawnLocationsFound;
 
@@ -88,6 +93,10 @@ public class UHCv2 extends Game implements Listener {
 	private boolean meetupStarted;
 
 	private Task borderEscapePreventionTask;
+
+	private List<String> hasSpawned;
+	private List<Player> toTeleport;
+	private boolean teleportRunning;
 
 	public List<Location> getSpawnLocations() {
 		return spawnLocations;
@@ -103,7 +112,7 @@ public class UHCv2 extends Game implements Listener {
 
 	public UHCv2(World mainWorld, World netherWorld, int mainWorldSize, int spawnLocationsToFind, long meetupTime, long gracePeriodTime, long finalHealTime) {
 		this.world = mainWorld;
-		
+
 		this.mainWorld = mainWorld;
 		this.netherWorld = netherWorld;
 		this.ended = false;
@@ -114,6 +123,7 @@ public class UHCv2 extends Game implements Listener {
 		this.spawnLocationsToFind = spawnLocationsToFind;
 
 		this.spawnLocations = new ArrayList<Location>();
+		this.spawnLocationsToUse = new ArrayList<Location>();
 
 		this.endGracePeriodTrigger = null;
 		this.meetupTrigger = null;
@@ -132,6 +142,10 @@ public class UHCv2 extends Game implements Listener {
 		this.finalHealTime = finalHealTime;
 
 		this.borderEscapePreventionTask = null;
+
+		this.hasSpawned = new ArrayList<String>();
+		this.toTeleport = new ArrayList<Player>();
+		this.teleportRunning = false;
 	}
 
 	@Override
@@ -396,41 +410,8 @@ public class UHCv2 extends Game implements Listener {
 			return;
 		}
 
-		List<Location> spawnLocationList = ListUtils.cloneList(spawnLocations);
-
-		startGracePeriod(gracePeriodTime);
-		startNoTpDamageTime();
-
-		for (Player player : Bukkit.getServer().getOnlinePlayers()) {
-			boolean isPlaying = players.contains(player.getUniqueId());
-
-			PlayerUtils.clearPlayerInventory(player);
-			PlayerUtils.clearPotionEffects(player);
-			PlayerUtils.resetPlayerXP(player);
-			PlayerUtils.setMaxHealth(player, 40);
-			PlayerUtils.fullyHealPlayer(player);
-
-			player.setGameMode(isPlaying ? GameMode.SURVIVAL : GameMode.SPECTATOR);
-			player.setFireTicks(0);
-			player.setSaturation(20F);
-
-			if (isPlaying) {
-				if (spawnLocationList.size() == 0) {
-					spawnLocationList = ListUtils.cloneList(spawnLocations);
-				}
-
-				Location location = spawnLocationList.remove(0);
-
-				safeTeleport(player, location);
-
-				new BukkitRunnable() {
-					@Override
-					public void run() {
-						safeTeleport(player, location);
-					}
-				}.runTaskLater(NovaUHCv2.getInstance(), 5L);
-			}
-		}
+		spawnLocationsToUse = ListUtils.cloneList(spawnLocations);
+		toTeleport = new ArrayList<>(Bukkit.getServer().getOnlinePlayers());
 
 		borderEscapePreventionTask = new SimpleTask(new Runnable() {
 			@Override
@@ -440,7 +421,7 @@ public class UHCv2 extends Game implements Listener {
 						if (player.getWorld().getUID().toString().equalsIgnoreCase(mainWorld.getUID().toString()) || player.getWorld().getUID().toString().equalsIgnoreCase(netherWorld.getUID().toString())) {
 							double borderSize = player.getWorld().getWorldBorder().getSize() / 2;
 
-							//Log.trace("Border size: " + borderSize);
+							// Log.trace("Border size: " + borderSize);
 
 							double px = player.getLocation().getX();
 							double pz = player.getLocation().getZ();
@@ -468,9 +449,119 @@ public class UHCv2 extends Game implements Listener {
 
 		borderEscapePreventionTask.start();
 
-		started = true;
+		for (Player player : Bukkit.getServer().getOnlinePlayers()) {
+			player.addPotionEffect(new PotionEffect(PotionEffectType.BLINDNESS, 137420, 0, true, false), true);
+		}
 
-		this.sendBeginEvent();
+		Bukkit.getServer().broadcastMessage(ChatColor.GOLD + "" + ChatColor.BOLD + "Please wait for all players to teleport");
+
+		tpPlayersToArena();
+
+		started = true;
+	}
+
+	public void tpPlayersToArena() {
+		teleportRunning = true;
+		preventAllDamage = true;
+
+		if (toTeleport.size() == 0) {
+			Log.info("Teleport completed");
+			new BukkitRunnable() {
+				@Override
+				public void run() {
+					preventAllDamage = false;
+				}
+			}.runTaskLater(NovaUHCv2.getInstance(), 60L);
+
+			for (Player player : Bukkit.getServer().getOnlinePlayers()) {
+				PlayerUtils.clearPotionEffects(player);
+				player.setFireTicks(0);
+				player.setSaturation(20F);
+			}
+
+			teleportRunning = false;
+			startGracePeriod(gracePeriodTime);
+			this.sendBeginEvent();
+			return;
+		}
+
+		Player player = toTeleport.remove(0);
+
+		if (player.isOnline()) {
+			Log.info("Spwning player" + player.getName() + ". " + toTeleport.size() + " left");
+			spawnPlayer(player);
+		}
+
+		new BukkitRunnable() {
+
+			@Override
+			public void run() {
+				tpPlayersToArena();
+			}
+
+		}.runTaskLater(NovaUHCv2.getInstance(), 1L);
+	}
+
+	private void spawnPlayer(Player player) {
+		boolean isPlaying = players.contains(player.getUniqueId());
+
+		PlayerUtils.clearPlayerInventory(player);
+		PlayerUtils.resetPlayerXP(player);
+		PlayerUtils.setMaxHealth(player, 40);
+		PlayerUtils.fullyHealPlayer(player);
+
+		player.setGameMode(isPlaying ? GameMode.SURVIVAL : GameMode.SPECTATOR);
+		player.setFireTicks(0);
+		player.setSaturation(20F);
+
+		world.setTime(1000);
+
+		if (spawnLocationsToUse.size() == 0) {
+			spawnLocationsToUse = ListUtils.cloneList(spawnLocations);
+		}
+
+		Location location = spawnLocationsToUse.remove(0);
+
+		safeTeleport(player, location);
+
+		new BukkitRunnable() {
+			@Override
+			public void run() {
+				safeTeleport(player, location);
+			}
+		}.runTaskLater(NovaUHCv2.getInstance(), 5L);
+
+		hasSpawned.add(player.getUniqueId().toString());
+	}
+
+	@EventHandler(priority = EventPriority.HIGH)
+	public void onPlayerMove(PlayerMoveEvent event) {
+		if (teleportRunning) {
+			double fromX = event.getFrom().getX();
+			double fromZ = event.getFrom().getZ();
+			double toX = event.getTo().getX();
+			double toZ = event.getTo().getZ();
+			if (!(fromX == toX)) {
+				event.getTo().setX(fromX);
+			}
+
+			if (!(fromZ == toZ)) {
+				event.getTo().setZ(fromZ);
+			}
+		}
+	}
+
+	@EventHandler(priority = EventPriority.HIGHEST)
+	public void onPlayerJoin(PlayerJoinEvent e) {
+		if (hasStarted()) {
+			if (!hasSpawned.contains(e.getPlayer().getUniqueId().toString())) {
+				if (teleportRunning) {
+					toTeleport.add(e.getPlayer());
+				} else {
+					spawnPlayer(e.getPlayer());
+				}
+			}
+		}
 	}
 
 	@Override
@@ -633,10 +724,12 @@ public class UHCv2 extends Game implements Listener {
 		}
 
 		new BukkitRunnable() {
+
 			@Override
 			public void run() {
 				runSpawnLocationScan();
 			}
+
 		}.runTaskLater(NovaUHCv2.getInstance(), 1L);
 	}
 
@@ -657,6 +750,10 @@ public class UHCv2 extends Game implements Listener {
 
 	@EventHandler(priority = EventPriority.NORMAL, ignoreCancelled = true)
 	public void onPlayerPortal(PlayerPortalEvent e) {
+		if (teleportRunning) {
+			e.setCancelled(true);
+		}
+
 		if (meetupStarted) {
 			e.setCancelled(true);
 		}
@@ -664,6 +761,10 @@ public class UHCv2 extends Game implements Listener {
 
 	@EventHandler(priority = EventPriority.NORMAL, ignoreCancelled = true)
 	public void onEntityPortal(EntityPortalEvent e) {
+		if (teleportRunning) {
+			e.setCancelled(true);
+		}
+
 		if (meetupStarted) {
 			e.setCancelled(true);
 		}
@@ -671,6 +772,10 @@ public class UHCv2 extends Game implements Listener {
 
 	@EventHandler(priority = EventPriority.NORMAL, ignoreCancelled = true)
 	public void onEntityDamage(EntityDamageEvent e) {
+		if (teleportRunning) {
+			e.setCancelled(true);
+		}
+
 		if (e.getEntity() instanceof Player) {
 			if (preventAllDamage) {
 				e.setCancelled(true);
