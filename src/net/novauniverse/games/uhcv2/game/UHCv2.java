@@ -94,6 +94,8 @@ public class UHCv2 extends Game implements Listener {
 
 	private Task borderEscapePreventionTask;
 
+	private Task fireResTask;
+
 	private List<String> hasSpawned;
 	private List<Player> toTeleport;
 	private boolean teleportRunning;
@@ -111,6 +113,8 @@ public class UHCv2 extends Game implements Listener {
 	}
 
 	public UHCv2(World mainWorld, World netherWorld, int mainWorldSize, int spawnLocationsToFind, long meetupTime, long gracePeriodTime, long finalHealTime) {
+		super(NovaUHCv2.getInstance());
+
 		this.world = mainWorld;
 
 		this.mainWorld = mainWorld;
@@ -146,10 +150,40 @@ public class UHCv2 extends Game implements Listener {
 		this.hasSpawned = new ArrayList<String>();
 		this.toTeleport = new ArrayList<Player>();
 		this.teleportRunning = false;
+
+		this.fireResTask = null;
 	}
 
 	@Override
 	public void onLoad() {
+		this.fireResTask = new SimpleTask(new Runnable() {
+			@Override
+			public void run() {
+				if (hasStarted()) {
+					if (gracePeriodActive) {
+						for (Player player : Bukkit.getServer().getOnlinePlayers()) {
+							if (players.contains(player.getUniqueId())) {
+								boolean shouldGive = true;
+
+								for (PotionEffect potionEffect : player.getActivePotionEffects()) {
+									if (potionEffect.getType().getName().toLowerCase().contains("fire")) {
+										if (potionEffect.getDuration() > 40) {
+											shouldGive = false;
+											break;
+										}
+									}
+								}
+
+								if (shouldGive) {
+									player.addPotionEffect(new PotionEffect(PotionEffectType.FIRE_RESISTANCE, 40, 0), true);
+								}
+							}
+						}
+					}
+				}
+			}
+		}, 20L);
+
 		this.mainWorldGenerator = new WorldPreGenerator(mainWorld, mainWorldSize + 10, 60, 1, new Callback() {
 			@Override
 			public void execute() {
@@ -285,6 +319,8 @@ public class UHCv2 extends Game implements Listener {
 						if (player.getGameMode() != GameMode.SPECTATOR) {
 							player.sendMessage(ChatColor.GOLD + "" + ChatColor.BOLD + "You have been healed");
 
+							player.setSaturation(20F);
+							player.setFoodLevel(20);
 							VersionIndependantUtils.get().playSound(player, player.getLocation(), VersionIndependantSound.NOTE_PLING, 1F, 1.5F);
 
 							PlayerUtils.fullyHealPlayer(player);
@@ -447,7 +483,8 @@ public class UHCv2 extends Game implements Listener {
 			}
 		}, 5L);
 
-		borderEscapePreventionTask.start();
+		Task.tryStartTask(borderEscapePreventionTask);
+		Task.tryStartTask(fireResTask);
 
 		for (Player player : Bukkit.getServer().getOnlinePlayers()) {
 			player.addPotionEffect(new PotionEffect(PotionEffectType.BLINDNESS, 137420, 0, true, false), true);
@@ -592,6 +629,7 @@ public class UHCv2 extends Game implements Listener {
 		}
 
 		Task.tryStopTask(borderEscapePreventionTask);
+		Task.tryStopTask(fireResTask);
 
 		ended = true;
 	}
@@ -703,7 +741,8 @@ public class UHCv2 extends Game implements Listener {
 					break;
 				}
 
-				if (block.getType().isSolid()) {
+				// Seems like the plugin dont think leaves are solid
+				if (block.getType().isSolid() || block.getType().name().toUpperCase().contains("LEAVES")) {
 					location.add(0, 2, 0);
 					spawnLocations.add(location);
 					success = true;
