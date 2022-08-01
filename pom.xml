@@ -8,12 +8,12 @@
 
 	<distributionManagement>
 		<snapshotRepository>
-			<id>novauniverse</id>
-			<url>https://nexus.novauniverse.net/repository/novauniverse/</url>
+			<id>novauniverse2</id>
+			<url>https://nexus2.novauniverse.net/repository/novauniverse/</url>
 		</snapshotRepository>
 		<repository>
-			<id>novauniverse</id>
-			<url>https://nexus.novauniverse.net/repository/novauniverse/</url>
+			<id>novauniverse2</id>
+			<url>https://nexus2.novauniverse.net/repository/novauniverse/</url>
 		</repository>
 	</distributionManagement>
 
@@ -99,13 +99,8 @@
 
 	<repositories>
 		<repository>
-			<id>spigot-repo</id>
-			<url>https://hub.spigotmc.org/nexus/content/repositories/snapshots/</url>
-		</repository>
-
-		<repository>
-			<id>novauniverse-group</id>
-			<url>https://nexus.novauniverse.net/repository/novauniverse-group/</url>
+			<id>novauniverse2</id>
+			<url>https://nexus2.novauniverse.net/repository/novauniverse-group/</url>
 		</repository>
 	</repositories>
 
@@ -131,16 +126,16 @@
 		</dependency>
 
 		<dependency>
-			<groupId>net.zeeraa.novacore</groupId>
+			<groupId>net.novauniverse.novacore</groupId>
 			<artifactId>novacore-spigot</artifactId>
-			<version>1.1.0-SNAPSHOT</version>
+			<version>2.0.0-SNAPSHOT</version>
 			<scope>provided</scope>
 		</dependency>
 
 		<dependency>
-			<groupId>net.zeeraa.novacore</groupId>
+			<groupId>net.novauniverse.novacore</groupId>
 			<artifactId>novacore-gameengine</artifactId>
-			<version>1.0.0-SNAPSHOT</version>
+			<version>2.0.0-SNAPSHOT</version>
 			<scope>provided</scope>
 		</dependency>
 	</dependencies>

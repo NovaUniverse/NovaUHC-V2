@@ -10,9 +10,9 @@ import org.bukkit.plugin.java.JavaPlugin;
 import net.novauniverse.games.uhcv2.debug.DebugCommands;
 import net.novauniverse.games.uhcv2.game.UHCv2;
 import net.novauniverse.games.uhcv2.modules.UHCIncreasedAppleDropRate;
+import net.zeeraa.novacore.spigot.gameengine.module.modules.game.GameManager;
+import net.zeeraa.novacore.spigot.gameengine.module.modules.gamelobby.GameLobby;
 import net.zeeraa.novacore.spigot.module.ModuleManager;
-import net.zeeraa.novacore.spigot.module.modules.game.GameManager;
-import net.zeeraa.novacore.spigot.module.modules.gamelobby.GameLobby;
 
 public class NovaUHCv2 extends JavaPlugin implements Listener {
 	private static NovaUHCv2 instance;
@@ -62,10 +62,10 @@ public class NovaUHCv2 extends JavaPlugin implements Listener {
 
 		long gracePeriodTime = getConfig().getLong("grace_period_time");
 
-		GameManager.getInstance().setUseCombatTagging(combatTagging);
-
 		ModuleManager.require(GameManager.class);
 		ModuleManager.require(GameLobby.class);
+
+		GameManager.getInstance().setUseCombatTagging(combatTagging);
 
 		World mainWorld = Bukkit.getServer().getWorld("world");
 		World netherWorld = Bukkit.getServer().getWorld("world_nether");
@@ -78,7 +78,7 @@ public class NovaUHCv2 extends JavaPlugin implements Listener {
 		GameManager.getInstance().setCombatTaggingTime(5);
 		GameManager.getInstance().setUseCombatTagging(combatTagging);
 
-		ModuleManager.loadModule(UHCIncreasedAppleDropRate.class, true);
+		ModuleManager.loadModule(this, UHCIncreasedAppleDropRate.class, true);
 
 		new DebugCommands();
 

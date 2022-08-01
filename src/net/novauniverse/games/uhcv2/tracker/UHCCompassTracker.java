@@ -8,9 +8,9 @@ import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.entity.Player;
 
+import net.zeeraa.novacore.spigot.gameengine.module.modules.game.GameManager;
 import net.zeeraa.novacore.spigot.module.modules.compass.CompassTarget;
 import net.zeeraa.novacore.spigot.module.modules.compass.CompassTrackerTarget;
-import net.zeeraa.novacore.spigot.module.modules.game.GameManager;
 
 public class UHCCompassTracker implements CompassTrackerTarget {
 	@Override

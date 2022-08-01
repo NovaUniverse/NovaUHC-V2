@@ -13,9 +13,8 @@ import net.zeeraa.novacore.spigot.utils.ItemBuilder;
 import net.zeeraa.novacore.spigot.utils.LocationUtils;
 
 public class UHCIncreasedAppleDropRate extends NovaModule implements Listener {
-	@Override
-	public String getName() {
-		return "UHCIncreasedAppleDropRate";
+	public UHCIncreasedAppleDropRate() {
+		super("UHCv2.UHCIncreasedAppleDropRate");
 	}
 
 	@EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)

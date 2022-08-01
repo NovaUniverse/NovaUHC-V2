@@ -39,18 +39,17 @@ import net.zeeraa.novacore.commons.utils.Callback;
 import net.zeeraa.novacore.commons.utils.ListUtils;
 import net.zeeraa.novacore.commons.utils.RandomGenerator;
 import net.zeeraa.novacore.commons.utils.TextUtils;
-import net.zeeraa.novacore.spigot.abstraction.VersionIndependantUtils;
-import net.zeeraa.novacore.spigot.abstraction.enums.VersionIndependantSound;
+import net.zeeraa.novacore.spigot.abstraction.enums.VersionIndependentSound;
+import net.zeeraa.novacore.spigot.gameengine.module.modules.game.Game;
+import net.zeeraa.novacore.spigot.gameengine.module.modules.game.GameEndReason;
+import net.zeeraa.novacore.spigot.gameengine.module.modules.game.elimination.PlayerQuitEliminationAction;
+import net.zeeraa.novacore.spigot.gameengine.module.modules.game.triggers.DelayedGameTrigger;
+import net.zeeraa.novacore.spigot.gameengine.module.modules.game.triggers.GameTrigger;
+import net.zeeraa.novacore.spigot.gameengine.module.modules.game.triggers.ScheduledGameTrigger;
+import net.zeeraa.novacore.spigot.gameengine.module.modules.game.triggers.TriggerCallback;
+import net.zeeraa.novacore.spigot.gameengine.module.modules.game.triggers.TriggerFlag;
 import net.zeeraa.novacore.spigot.module.ModuleManager;
 import net.zeeraa.novacore.spigot.module.modules.compass.CompassTracker;
-import net.zeeraa.novacore.spigot.module.modules.game.Game;
-import net.zeeraa.novacore.spigot.module.modules.game.GameEndReason;
-import net.zeeraa.novacore.spigot.module.modules.game.elimination.PlayerQuitEliminationAction;
-import net.zeeraa.novacore.spigot.module.modules.game.triggers.DelayedGameTrigger;
-import net.zeeraa.novacore.spigot.module.modules.game.triggers.GameTrigger;
-import net.zeeraa.novacore.spigot.module.modules.game.triggers.ScheduledGameTrigger;
-import net.zeeraa.novacore.spigot.module.modules.game.triggers.TriggerCallback;
-import net.zeeraa.novacore.spigot.module.modules.game.triggers.TriggerFlag;
 import net.zeeraa.novacore.spigot.tasks.SimpleTask;
 import net.zeeraa.novacore.spigot.utils.ItemBuilder;
 import net.zeeraa.novacore.spigot.utils.LocationUtils;
@@ -207,9 +206,7 @@ public class UHCv2 extends Game implements Listener {
 
 				Bukkit.broadcastMessage(ChatColor.GOLD + "" + ChatColor.BOLD + "PVP is now enabled");
 
-				for (Player player : Bukkit.getServer().getOnlinePlayers()) {
-					VersionIndependantUtils.get().playSound(player, player.getLocation(), VersionIndependantSound.NOTE_PLING);
-				}
+				VersionIndependentSound.NOTE_PLING.broadcast();
 
 				gracePeriodActive = false;
 			}
@@ -222,9 +219,7 @@ public class UHCv2 extends Game implements Listener {
 
 				Bukkit.broadcastMessage(ChatColor.GOLD + "" + ChatColor.BOLD + "Teleporting to meetup area");
 
-				for (Player player : Bukkit.getServer().getOnlinePlayers()) {
-					VersionIndependantUtils.get().playSound(player, player.getLocation(), VersionIndependantSound.NOTE_PLING);
-				}
+				VersionIndependentSound.NOTE_PLING.broadcast();
 
 				triggerMeetup();
 			}
@@ -247,24 +242,18 @@ public class UHCv2 extends Game implements Listener {
 				switch (timeLeftReal) {
 				case 60:
 					Bukkit.getServer().broadcastMessage(ChatColor.GOLD + "" + ChatColor.BOLD + "Meetup starts in" + ChatColor.AQUA + "" + ChatColor.BOLD + " 1 minute");
-					for (Player player : Bukkit.getServer().getOnlinePlayers()) {
-						VersionIndependantUtils.get().playSound(player, player.getLocation(), VersionIndependantSound.NOTE_PLING);
-					}
+					VersionIndependentSound.NOTE_PLING.broadcast();
 					break;
 
 				case 600:
 					Bukkit.getServer().broadcastMessage(ChatColor.GOLD + "" + ChatColor.BOLD + "Meetup starts in " + ChatColor.AQUA + "" + ChatColor.BOLD + "10 minutes");
-					for (Player player : Bukkit.getServer().getOnlinePlayers()) {
-						VersionIndependantUtils.get().playSound(player, player.getLocation(), VersionIndependantSound.NOTE_PLING);
-					}
+					VersionIndependentSound.NOTE_PLING.broadcast();
 					break;
 
 				default:
 					if (timeLeftReal < 6 && timeLeftReal > 0) {
 						Bukkit.getServer().broadcastMessage(ChatColor.GOLD + "" + ChatColor.BOLD + "Meetup starts in " + ChatColor.AQUA + "" + ChatColor.BOLD + "" + timeLeftReal);
-						for (Player player : Bukkit.getServer().getOnlinePlayers()) {
-							VersionIndependantUtils.get().playSound(player, player.getLocation(), VersionIndependantSound.NOTE_PLING);
-						}
+						VersionIndependentSound.NOTE_PLING.broadcast();
 					}
 					break;
 				}
@@ -282,24 +271,18 @@ public class UHCv2 extends Game implements Listener {
 				switch ((int) timeLeftReal) {
 				case 60:
 					Bukkit.getServer().broadcastMessage(ChatColor.GOLD + "" + ChatColor.BOLD + "Grace period ends in" + ChatColor.AQUA + "" + ChatColor.BOLD + " 1 minute");
-					for (Player player : Bukkit.getServer().getOnlinePlayers()) {
-						VersionIndependantUtils.get().playSound(player, player.getLocation(), VersionIndependantSound.NOTE_PLING);
-					}
+					VersionIndependentSound.NOTE_PLING.broadcast();
 					break;
 
 				case 600:
 					Bukkit.getServer().broadcastMessage(ChatColor.GOLD + "" + ChatColor.BOLD + "Grace period ends in " + ChatColor.AQUA + "" + ChatColor.BOLD + "10 minutes");
-					for (Player player : Bukkit.getServer().getOnlinePlayers()) {
-						VersionIndependantUtils.get().playSound(player, player.getLocation(), VersionIndependantSound.NOTE_PLING);
-					}
+					VersionIndependentSound.NOTE_PLING.broadcast();
 					break;
 
 				default:
 					if (timeLeftReal < 6 && timeLeftReal > 0) {
 						Bukkit.getServer().broadcastMessage(ChatColor.GOLD + "" + ChatColor.BOLD + "Grace period ends in " + ChatColor.AQUA + "" + ChatColor.BOLD + "" + timeLeftReal);
-						for (Player player : Bukkit.getServer().getOnlinePlayers()) {
-							VersionIndependantUtils.get().playSound(player, player.getLocation(), VersionIndependantSound.NOTE_PLING);
-						}
+						VersionIndependentSound.NOTE_PLING.broadcast();
 					}
 					break;
 				}
@@ -315,17 +298,17 @@ public class UHCv2 extends Game implements Listener {
 				public void run(GameTrigger trigger, TriggerFlag reason) {
 					((DelayedGameTrigger) trigger).stop();
 
-					for (Player player : Bukkit.getServer().getOnlinePlayers()) {
+					Bukkit.getServer().getOnlinePlayers().forEach(player -> {
 						if (player.getGameMode() != GameMode.SPECTATOR) {
 							player.sendMessage(ChatColor.GOLD + "" + ChatColor.BOLD + "You have been healed");
 
 							player.setSaturation(20F);
 							player.setFoodLevel(20);
-							VersionIndependantUtils.get().playSound(player, player.getLocation(), VersionIndependantSound.NOTE_PLING, 1F, 1.5F);
+							VersionIndependentSound.NOTE_PLING.play(player);
 
 							PlayerUtils.fullyHealPlayer(player);
 						}
-					}
+					});
 				}
 			});
 
@@ -340,16 +323,12 @@ public class UHCv2 extends Game implements Listener {
 					switch ((int) timeLeftReal) {
 					case 60:
 						Bukkit.getServer().broadcastMessage(ChatColor.GOLD + "" + ChatColor.BOLD + "Final heal in" + ChatColor.AQUA + "" + ChatColor.BOLD + " 1 minute");
-						for (Player player : Bukkit.getServer().getOnlinePlayers()) {
-							VersionIndependantUtils.get().playSound(player, player.getLocation(), VersionIndependantSound.NOTE_PLING);
-						}
+						VersionIndependentSound.NOTE_PLING.broadcast();
 						break;
 
 					case 600:
 						Bukkit.getServer().broadcastMessage(ChatColor.GOLD + "" + ChatColor.BOLD + "Final heal in " + ChatColor.AQUA + "" + ChatColor.BOLD + "10 minutes");
-						for (Player player : Bukkit.getServer().getOnlinePlayers()) {
-							VersionIndependantUtils.get().playSound(player, player.getLocation(), VersionIndependantSound.NOTE_PLING);
-						}
+						VersionIndependentSound.NOTE_PLING.broadcast();
 						break;
 
 					default:
@@ -452,7 +431,7 @@ public class UHCv2 extends Game implements Listener {
 		borderEscapePreventionTask = new SimpleTask(new Runnable() {
 			@Override
 			public void run() {
-				for (Player player : Bukkit.getServer().getOnlinePlayers()) {
+				Bukkit.getServer().getOnlinePlayers().forEach(player -> {
 					if (player.getGameMode() == GameMode.SPECTATOR) {
 						if (player.getWorld().getUID().toString().equalsIgnoreCase(mainWorld.getUID().toString()) || player.getWorld().getUID().toString().equalsIgnoreCase(netherWorld.getUID().toString())) {
 							double borderSize = player.getWorld().getWorldBorder().getSize() / 2;
@@ -479,7 +458,7 @@ public class UHCv2 extends Game implements Listener {
 							}
 						}
 					}
-				}
+				});
 			}
 		}, 5L);
 
@@ -530,7 +509,6 @@ public class UHCv2 extends Game implements Listener {
 		}
 
 		new BukkitRunnable() {
-
 			@Override
 			public void run() {
 				tpPlayersToArena();
@@ -608,22 +586,22 @@ public class UHCv2 extends Game implements Listener {
 		}
 
 		try {
-			for (Player p : Bukkit.getServer().getOnlinePlayers()) {
-				p.setHealth(p.getMaxHealth());
-				p.setFoodLevel(20);
-				PlayerUtils.clearPlayerInventory(p);
-				PlayerUtils.resetPlayerXP(p);
-				p.setGameMode(GameMode.SPECTATOR);
-				VersionIndependantUtils.get().playSound(p, p.getLocation(), VersionIndependantSound.WITHER_DEATH, 1F, 1F);
+			VersionIndependentSound.WITHER_DEATH.broadcast();
+			Bukkit.getServer().getOnlinePlayers().forEach(player -> {
+				player.setHealth(player.getMaxHealth());
+				player.setFoodLevel(20);
+				PlayerUtils.clearPlayerInventory(player);
+				PlayerUtils.resetPlayerXP(player);
+				player.setGameMode(GameMode.SPECTATOR);
 
-				Firework fw = (Firework) p.getLocation().getWorld().spawnEntity(p.getLocation(), EntityType.FIREWORK);
+				Firework fw = (Firework) player.getLocation().getWorld().spawnEntity(player.getLocation(), EntityType.FIREWORK);
 				FireworkMeta fwm = fw.getFireworkMeta();
 
 				fwm.setPower(2);
 				fwm.addEffect(RandomFireworkEffect.randomFireworkEffect());
 
 				fw.setFireworkMeta(fwm);
-			}
+			});
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -654,7 +632,7 @@ public class UHCv2 extends Game implements Listener {
 		CompassTracker.getInstance().setStrictMode(true);
 		CompassTracker.getInstance().setCompassTrackerTarget(new UHCCompassTracker());
 
-		for (Player player : Bukkit.getServer().getOnlinePlayers()) {
+		Bukkit.getServer().getOnlinePlayers().forEach(player -> {
 			player.getInventory().addItem(new ItemBuilder(Material.COMPASS).setName(ChatColor.GOLD + "" + ChatColor.BOLD + "Player tracker").addLore(ChatColor.AQUA + "Points towards the closest player").build());
 
 			Location location = LocationUtils.centerLocation(mainWorld.getHighestBlockAt(new Location(mainWorld, RandomGenerator.generateDouble(-31, 31), 0, RandomGenerator.generateDouble(-31, 31))).getLocation().clone().add(0, 3, 0));
@@ -666,7 +644,7 @@ public class UHCv2 extends Game implements Listener {
 					safeTeleport(player, location);
 				}
 			}.runTaskLater(NovaUHCv2.getInstance(), 5L);
-		}
+		});
 
 		mainWorld.getWorldBorder().setCenter(0.5, 0.5);
 		mainWorld.getWorldBorder().setSize(66);
